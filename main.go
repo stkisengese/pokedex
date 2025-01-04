@@ -21,11 +21,14 @@ func commandExit() error {
 
 func commandHelp(commands map[string]cliCommand) func() error {
 	return func() error {
-		fmt.Println("Welcome to the Pokedex!")
-		fmt.Print("Usage:\n\n")
+		fmt.Println()
+		fmt.Println("\nWelcome to the Pokedex!")
+		fmt.Println("Usage:")
+		fmt.Println()
 		for _, cmd := range commands {
 			fmt.Printf("%s: %s\n", cmd.name, cmd.description)
 		}
+		fmt.Println()
 		return nil
 	}
 }
@@ -60,8 +63,10 @@ func main() {
 				if err := cmd.callback(); err != nil {
 					fmt.Printf("Error executing command '%s': %s\n", commandName, err)
 				}
+				continue
 			} else {
 				fmt.Println("Unknown command")
+				continue
 			}
 		}
 
