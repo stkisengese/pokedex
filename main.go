@@ -7,23 +7,68 @@ import (
 	"strings"
 )
 
+type cliCommand struct {
+	name        string
+	description string
+	callback    func() error
+}
+
+func commandExit() error {
+	fmt.Println("Closing the Pokedex... Goodbye!")
+	os.Exit(0)
+	return nil
+}
+
+func commandHelp(commands map[string]cliCommand) func() error {
+	return func() error {
+		fmt.Println("Welcome to the Pokedex!")
+		fmt.Print("Usage:\n\n")
+		for _, cmd := range commands {
+			fmt.Printf("%s: %s\n", cmd.name, cmd.description)
+		}
+		return nil
+	}
+}
+
 func main() {
-	scanner := bufio.NewScanner(os.Stdin)
+	reader := bufio.NewScanner(os.Stdin)
+
+	// Create a map of supported commands
+	commands := map[string]cliCommand{}
+
+	commands["help"] = cliCommand{
+		name:        "help",
+		description: "Displays a help message",
+		callback:    commandHelp(commands),
+	}
+
+	commands["exit"] = cliCommand{
+		name:        "exit",
+		description: "Exit the Pokedex",
+		callback:    commandExit,
+	}
 
 	for {
 		fmt.Print("Pokedex > ")
-		scanner.Scan()
-		input := scanner.Text()
+		reader.Scan()
 
-		words := cleanInput(input)
+		words := cleanInput(reader.Text())
+
 		if len(words) > 0 {
-			fmt.Printf("Your command was: %s\n", words[0])
+			commandName := words[0]
+			if cmd, found := commands[commandName]; found {
+				if err := cmd.callback(); err != nil {
+					fmt.Printf("Error executing command '%s': %s\n", commandName, err)
+				}
+			} else {
+				fmt.Println("Unknown command")
+			}
 		}
+
 	}
 }
 
 func cleanInput(text string) []string {
 	result := strings.ToLower(text)
-	//result = strings.TrimSpace(result)
 	return strings.Fields(result)
 }
