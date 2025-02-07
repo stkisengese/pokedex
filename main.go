@@ -34,12 +34,6 @@ type pokeAPIResponse struct {
 	Previous *string        `json:"previous"`
 }
 
-func commandExit(cfg *config) error {
-	fmt.Println("Closing the Pokedex... Goodbye!")
-	os.Exit(0)
-	return nil
-}
-
 // commandMap handles the 'map' command
 func commandMap(cfg *config) error {
 	url := cfg.NextURL
@@ -108,20 +102,6 @@ func commandMapBack(cfg *config) error {
 		cfg.PreviousURL = ""
 	}
 	return nil
-}
-
-func commandHelp(commands map[string]cliCommand) func(*config) error {
-	return func(*config) error {
-		fmt.Println()
-		fmt.Println("\nWelcome to the Pokedex!")
-		fmt.Println("Usage:")
-		fmt.Println()
-		for _, cmd := range commands {
-			fmt.Printf("%s: %s\n", cmd.name, cmd.description)
-		}
-		fmt.Println()
-		return nil
-	}
 }
 
 func main() {
