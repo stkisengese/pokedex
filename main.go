@@ -5,37 +5,21 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
+
+	"github.com/stkisengese/pokedex/internal/models"
+	"github.com/stkisengese/pokedex/internal/pokecache"
 )
-
-// clicommand represents a command in the REPL
-type cliCommand struct {
-	name        string
-	description string
-	callback    func(*config) error
-}
-
-// config stores URLs for pagination
-type config struct {
-	NextURL     string
-	PreviousURL string
-}
-
-// locationArea represents a location area in the PokeAPI
-type locationArea struct {
-	Name string `json:"name"`
-}
-
-// pokeAPIResponse represents the PokeAPI response
-type pokeAPIResponse struct {
-	Results  []locationArea `json:"results"`
-	Next     *string        `json:"next"`
-	Previous *string        `json:"previous"`
-}
 
 func main() {
 	reader := bufio.NewScanner(os.Stdin)
 
-	cfg := &config{}
+	// Initialize the cache with a 5-minute expiration interval
+	cache := pokecache.NewCache(5 * time.Minute)
+
+	cfg := &models.Config{
+		Cache: cache,
+	}
 
 	for {
 		fmt.Print("Pokedex > ")
@@ -47,7 +31,7 @@ func main() {
 			commandName := words[0]
 
 			if cmd, found := getCommands()[commandName]; found {
-				if err := cmd.callback(cfg); err != nil {
+				if err := cmd.Callback(cfg); err != nil {
 					fmt.Printf("Error executing command '%s': %s\n", commandName, err)
 				}
 				continue
@@ -65,30 +49,30 @@ func cleanInput(text string) []string {
 	return strings.Fields(result)
 }
 
-func getCommands() map[string]cliCommand {
-	return map[string]cliCommand{
+func getCommands() map[string]models.CLICommand {
+	return map[string]models.CLICommand{
 		"help": {
-			name:        "help",
-			description: "Displays a help message",
-			callback:    commandHelp,
+			Name:        "help",
+			Description: "Displays a help message",
+			Callback:    commandHelp,
 		},
 
 		"exit": {
-			name:        "exit",
-			description: "Exit the Pokedex",
-			callback:    commandExit,
+			Name:        "exit",
+			Description: "Exit the Pokedex",
+			Callback:    commandExit,
 		},
 
 		"map": {
-			name:        "map",
-			description: "Displays 20 location areas in the Pokemon world",
-			callback:    commandMap,
+			Name:        "map",
+			Description: "Displays 20 location areas in the Pokemon world",
+			Callback:    commandMap,
 		},
 
 		"mapb": {
-			name:        "mapb",
-			description: "Displays the previous 20 location areas",
-			callback:    commandMapBack,
+			Name:        "mapb",
+			Description: "Displays the previous 20 location areas",
+			Callback:    commandMapBack,
 		},
 	}
 }
