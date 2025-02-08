@@ -29,9 +29,10 @@ func main() {
 
 		if len(words) > 0 {
 			commandName := words[0]
+			args := words[1:]
 
 			if cmd, found := getCommands()[commandName]; found {
-				if err := cmd.Callback(cfg); err != nil {
+				if err := cmd.Callback(cfg, args...); err != nil {
 					fmt.Printf("Error executing command '%s': %s\n", commandName, err)
 				}
 				continue
@@ -73,6 +74,11 @@ func getCommands() map[string]models.CLICommand {
 			Name:        "mapb",
 			Description: "Displays the previous 20 location areas",
 			Callback:    commandMapBack,
+		},
+		"explore": {
+			Name:        "explore",
+			Description: "Explore list of all the Pokemon in a location area",
+			Callback:    commandExplore,
 		},
 	}
 }
