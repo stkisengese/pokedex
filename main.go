@@ -2,9 +2,7 @@ package main
 
 import (
 	"bufio"
-	"encoding/json"
 	"fmt"
-	"net/http"
 	"os"
 	"strings"
 )
@@ -34,107 +32,10 @@ type pokeAPIResponse struct {
 	Previous *string        `json:"previous"`
 }
 
-// commandMap handles the 'map' command
-func commandMap(cfg *config) error {
-	url := cfg.NextURL
-	if url == "" {
-		url = "https://pokeapi.co/api/v2/location-area?limit=20"
-	}
-
-	resp, err := http.Get(url)
-	if err != nil {
-		return fmt.Errorf("error fetching data: %v", err)
-	}
-	defer resp.Body.Close()
-
-	var response pokeAPIResponse
-	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
-		return fmt.Errorf("error decoding response: %v", err)
-	}
-
-	for _, area := range response.Results {
-		fmt.Println(area.Name)
-	}
-
-	if response.Next != nil {
-		cfg.NextURL = *response.Next
-	} else {
-		cfg.NextURL = ""
-	}
-
-	if response.Previous != nil {
-		cfg.PreviousURL = *response.Previous
-	} else {
-		cfg.PreviousURL = ""
-	}
-	return nil
-}
-
-// commandMapBack handles the 'mapb' command
-func commandMapBack(cfg *config) error {
-	if cfg.PreviousURL == "" {
-		fmt.Println("you're on the first page")
-		return nil
-	}
-
-	resp, err := http.Get(cfg.PreviousURL)
-	if err != nil {
-		return fmt.Errorf("error fetching data: %v", err)
-	}
-	defer resp.Body.Close()
-
-	var response pokeAPIResponse
-	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
-		return fmt.Errorf("error decoding response: %v", err)
-	}
-
-	for _, area := range response.Results {
-		fmt.Println(area.Name)
-	}
-	if response.Next != nil {
-		cfg.NextURL = *response.Next
-	} else {
-		cfg.NextURL = ""
-	}
-	if response.Previous != nil {
-		cfg.PreviousURL = *response.Previous
-	} else {
-		cfg.PreviousURL = ""
-	}
-	return nil
-}
-
 func main() {
 	reader := bufio.NewScanner(os.Stdin)
 
 	cfg := &config{}
-
-	// Create a map of supported commands
-	commands := map[string]cliCommand{}
-
-	commands["help"] = cliCommand{
-		name:        "help",
-		description: "Displays a help message",
-		callback:    commandHelp(commands),
-	}
-
-	commands["exit"] = cliCommand{
-		name:        "exit",
-		description: "Exit the Pokedex",
-		callback:    commandExit,
-	}
-
-	commands["map"] = cliCommand{
-		name:        "map",
-		description: "Displays 20 location areas in the Pokemon world",
-		callback:    commandMap,
-	}
-
-	commands["mapb"] = cliCommand{
-		name:        "mapb",
-		description: "Displays the previous 20 location areas",
-		callback:    commandMapBack,
-	}
 
 	for {
 		fmt.Print("Pokedex > ")
@@ -144,7 +45,8 @@ func main() {
 
 		if len(words) > 0 {
 			commandName := words[0]
-			if cmd, found := commands[commandName]; found {
+
+			if cmd, found := getCommands()[commandName]; found {
 				if err := cmd.callback(cfg); err != nil {
 					fmt.Printf("Error executing command '%s': %s\n", commandName, err)
 				}
@@ -161,4 +63,32 @@ func main() {
 func cleanInput(text string) []string {
 	result := strings.ToLower(text)
 	return strings.Fields(result)
+}
+
+func getCommands() map[string]cliCommand {
+	return map[string]cliCommand{
+		"help": {
+			name:        "help",
+			description: "Displays a help message",
+			callback:    commandHelp,
+		},
+
+		"exit": {
+			name:        "exit",
+			description: "Exit the Pokedex",
+			callback:    commandExit,
+		},
+
+		"map": {
+			name:        "map",
+			description: "Displays 20 location areas in the Pokemon world",
+			callback:    commandMap,
+		},
+
+		"mapb": {
+			name:        "mapb",
+			description: "Displays the previous 20 location areas",
+			callback:    commandMapBack,
+		},
+	}
 }
