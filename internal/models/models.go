@@ -6,7 +6,7 @@ import "github.com/stkisengese/pokedex/internal/pokecache"
 type CLICommand struct {
 	Name        string
 	Description string
-	Callback    func(*Config) error
+	Callback    func(*Config, ...string) error
 }
 
 // config stores URLs for pagination
