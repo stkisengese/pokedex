@@ -6,7 +6,7 @@ import (
 	"github.com/stkisengese/pokedex/internal/models"
 )
 
-func commandHelp(cfg *models.Config) error {
+func commandHelp(cfg *models.Config, args ...string) error {
 	fmt.Println()
 	fmt.Println("\nWelcome to the Pokedex!")
 	fmt.Println("Usage:")
