@@ -6,6 +6,7 @@ import (
 	"math/rand"
 
 	"github.com/stkisengese/pokedex/internal/models"
+	"github.com/stkisengese/pokedex/internal/pokeapi"
 )
 
 // commandCatch handles the 'catch' command
@@ -18,7 +19,7 @@ func commandCatch(cfg *models.Config, args ...string) error {
 	url := fmt.Sprintf("https://pokeapi.co/api/v2/pokemon/%s", pokemonName)
 
 	// Fetch data from the cache or make a new request
-	data, err := FetchData(url, cfg.Cache)
+	data, err := pokeapi.FetchData(url, cfg.Cache)
 	if err != nil {
 		return fmt.Errorf("error fetching data: %v", err)
 	}
