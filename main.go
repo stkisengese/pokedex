@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"math/rand"
 	"os"
 	"strings"
 	"time"
@@ -12,13 +13,16 @@ import (
 )
 
 func main() {
+	rand.Seed(time.Now().UnixNano()) // Seed the random number generator
+
 	reader := bufio.NewScanner(os.Stdin)
 
 	// Initialize the cache with a 5-minute expiration interval
 	cache := pokecache.NewCache(5 * time.Minute)
 
 	cfg := &models.Config{
-		Cache: cache,
+		Cache:   cache,
+		Pokedex: make(map[string]models.Pokemon),
 	}
 
 	for {
@@ -79,6 +83,11 @@ func getCommands() map[string]models.CLICommand {
 			Name:        "explore",
 			Description: "Explore list of all the Pokemon in a location area",
 			Callback:    commandExplore,
+		},
+		"catch": {
+			Name:        "catch",
+			Description: "Attempt to catch a Pokémon",
+			Callback:    commandCatch,
 		},
 	}
 }
