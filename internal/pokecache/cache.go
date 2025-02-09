@@ -6,8 +6,7 @@ import (
 )
 
 type Cache struct {
-	cachedData   map[string]cacheEntry // store cached data
-	mutex        sync.RWMutex          // To ensure thread-safety for concurrent access to the map
+	cachedData   sync.Map // store cached data
 	reapInterval time.Duration
 }
 
@@ -19,7 +18,6 @@ type cacheEntry struct {
 // NewCache creates a new cache with a configurable reaping interval.
 func NewCache(reapInterval time.Duration) *Cache {
 	c := &Cache{
-		cachedData:   make(map[string]cacheEntry),
 		reapInterval: reapInterval,
 	}
 	go c.reapLoop() // start reaping loop in a goroutine
@@ -28,23 +26,22 @@ func NewCache(reapInterval time.Duration) *Cache {
 
 // Add adds a new entry to the cache
 func (c *Cache) Add(key string, val []byte) {
-	c.mutex.Lock()
-	defer c.mutex.Unlock()
-	c.cachedData[key] = cacheEntry{
+	c.cachedData.Store(key, cacheEntry{
 		createdAt: time.Now(),
 		val:       val,
-	}
+	})
 }
 
 // Get retrieves an entry from the cache
 func (c *Cache) Get(key string) ([]byte, bool) {
-	c.mutex.RLock()
-	defer c.mutex.RUnlock()
-	entry, exists := c.cachedData[key]
-	if !exists {
-		return nil, false
+	if entryInterface, ok := c.cachedData.Load(key); ok {
+		entry, ok := entryInterface.(cacheEntry) // Type assertion
+		if !ok {
+			return nil, false
+		}
+		return entry.val, true
 	}
-	return entry.val, true
+	return nil, false
 }
 
 // reapLoop runs in a gorutine to periodically remove the expired entries.
@@ -53,12 +50,20 @@ func (c *Cache) reapLoop() {
 	defer ticker.Stop()
 
 	for range ticker.C {
-		c.mutex.Lock()
-		for key, entry := range c.cachedData {
-			if time.Since(entry.createdAt) > c.reapInterval {
-				delete(c.cachedData, key)
+		keysToDelete := []string{}
+
+		c.cachedData.Range(func(key, value interface{}) bool {
+			entry, ok := value.(cacheEntry)
+			if !ok {
+				return true
 			}
+			if time.Since(entry.createdAt) > c.reapInterval {
+				keysToDelete = append(keysToDelete, key.(string))
+			}
+			return true
+		})
+		for _, key := range keysToDelete {
+			c.cachedData.Delete(key)
 		}
-		c.mutex.Unlock()
 	}
 }
