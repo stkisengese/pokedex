@@ -14,6 +14,7 @@ type Config struct {
 	NextURL     string
 	PreviousURL string
 	Cache       *pokecache.Cache
+	Pokedex     map[string]Pokemon
 }
 
 // locationArea represents a location area in the PokeAPI
@@ -26,4 +27,17 @@ type PokeAPIResponse struct {
 	Results  []locationArea `json:"results"`
 	Next     *string        `json:"next"`
 	Previous *string        `json:"previous"`
+}
+
+type LocationAreaDetail struct {
+	PokemonEncounters []struct {
+		Pokemon struct {
+			Name string `json:"name"`
+		} `json:"pokemon"`
+	} `json:"pokemon_encounters"`
+}
+
+type Pokemon struct {
+	Name           string `json:"name"`
+	BaseExperience int    `json:"base_experience"`
 }
