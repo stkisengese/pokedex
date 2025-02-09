@@ -94,5 +94,10 @@ func getCommands() map[string]models.CLICommand {
 			Description: "Inspect a caught Pokémon",
 			Callback:    commandInspect,
 		},
+		"pokedex": {
+			Name:        "inspect",
+			Description: "See all the caught Pokémons",
+			Callback:    commandPokedex,
+		},
 	}
 }
